@@ -489,11 +489,10 @@ endif()
 
 if (NOT KS_PLAT_WIN)
 	# All symbols are hidden by default, unless exposed explicitly
-	include(CheckCXXCompilerFlag)
-	check_cxx_compiler_flag(-fvisibility=hidden COMPILER_HAS_HIDDEN_VISIBILITY)
+	include(CheckCCompilerFlag)
+	check_c_compiler_flag(-fvisibility=hidden COMPILER_HAS_HIDDEN_VISIBILITY)
 	if (COMPILER_HAS_HIDDEN_VISIBILITY)
 		message("Compiler supports visibility")
-		set_target_properties(ks PROPERTIES CXX_VISIBILITY_PRESET hidden)
 		set_target_properties(ks PROPERTIES C_VISIBILITY_PRESET hidden)
 		target_compile_definitions(ks PRIVATE
 			-DKS_API_VISIBILITY=1
@@ -558,19 +557,9 @@ export(TARGETS ks
 if (NOT KS_PLAT_WIN)
 
 	# Set install targets
-	install(TARGETS ks COMPONENT "runtime" EXPORT LibKSConfig DESTINATION lib)
+	install(TARGETS ks COMPONENT "runtime" EXPORT LibKSConfig DESTINATION ${LIB_INSTALL_DIR})
 	install(DIRECTORY src/include/libks COMPONENT "runtime" DESTINATION include PATTERN src/include/libks/internal EXCLUDE)
-
-	# Set path for pkg-config based on ARCH and distro type
-	if("${CMAKE_OS_NAME}" STREQUAL "Centos") # pkg-config --variable pc_path pkg-config
-		if(${CPACK_SYSTEM_NAME} MATCHES "x86_64")
-			install(FILES ${PROJECT_BINARY_DIR}/libks.pc COMPONENT "runtime" DESTINATION lib64/pkgconfig)
-		else()
-			install(FILES ${PROJECT_BINARY_DIR}/libks.pc COMPONENT "runtime" DESTINATION lib/pkgconfig)
-		endif()
-	else()
-		install(FILES ${PROJECT_BINARY_DIR}/libks.pc COMPONENT "runtime" DESTINATION lib/pkgconfig)
-	endif()
+	install(FILES ${PROJECT_BINARY_DIR}/libks.pc COMPONENT "runtime" DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 
 	install(FILES cmake/ksutil.cmake COMPONENT "runtime" DESTINATION include/libks/cmake)
 	install(FILES cmake/FindPCRE.cmake COMPONENT "runtime" DESTINATION include/libks/cmake)
@@ -601,6 +590,7 @@ if (NOT KS_PLAT_WIN)
 	# Name: @PACKAGE_NAME@
 	# Version: @PACKAGE_VERSION@
 	set(PC_PREFIX ${CMAKE_INSTALL_PREFIX})
+	set(PC_LIB_DIR ${LIB_INSTALL_DIR})
 	set(PACKAGE_VERSION ${PROJECT_VERSION})
 	get_property(PC_DEFINITIONS TARGET ks PROPERTY INTERFACE_COMPILE_DEFINITIONS)
 	configure_file("${CMAKE_CURRENT_LIST_DIR}/libks.pc.in" "${PROJECT_BINARY_DIR}/libks.pc" @ONLY)
